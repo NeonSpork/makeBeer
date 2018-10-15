@@ -8,16 +8,21 @@ DallasTemperature probe(&oneWire);
 
 float currentTemp;
 int targetTemp = 0;
-template <typename T1=int>
+template <typename T1=int, typename T2=float>
 class TempHolder {
 private:
     T1 mTempInt;
+    T2 mTempFloat;
 public:
     TempHolder (T1& val1) {
         mTempInt = val1;
+        float mTempFloat = val1;
     };
     T1& getTempInt () {
         return mTempInt;
+    }
+    T2& getTempFloat () {
+        return mTempFloat;
     }
     T1& setTempInt (x) {
         if (x>0) {
@@ -42,6 +47,7 @@ void setup() {
     probe.begin();
     pinMode(tUpPin, INPUT_PULLUP);
     pinMode(tDownPin, INPUT_PULLUP);
+    target = TempHolder(targetTemp);
 }
 
 void loop() {
@@ -49,14 +55,14 @@ void loop() {
     currentTemp = probe.getTempCByIndex(0);
 
     if (digitalRead(tUpPin)) {
-        TempHolder.setTemp(1);
+        target.setTemp(1);
     }
     if (digitalRead(tDownPin)) {
-        TempHolder.setTemp(-1);
+        target.setTemp(-1);
     }
     
     lcd.setCursor(0, 0), lcd.print("Target temp: ");
-    lcd.setCursor(13, 0), lcd.print(TempHolder.getTempInt());
+    lcd.setCursor(13, 0), lcd.print(target.getTempInt());
     lcd.setCursor(15, 0), lcd.print(" *C");
     lcd.setCursor(0, 1), lcd.print("Current temp: ");
     lcd.setCursor(14, 1), lcd.print(currentTemp);
