@@ -47,7 +47,7 @@ void setup() {
     probe.begin();
     pinMode(tUpPin, INPUT_PULLUP);
     pinMode(tDownPin, INPUT_PULLUP);
-    target = TempHolder(targetTemp);
+    TempHolder <> target(targetTemp);
 }
 
 void loop() {
