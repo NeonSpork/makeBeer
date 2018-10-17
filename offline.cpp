@@ -1,18 +1,12 @@
 #include <LiquidCrystal.h>
 #include <DallasTemperature.h>
-#include <ESP8266WiFi.h>
 
 // Declarations for hardware
 const int rs = 7, en = 6, d4 = 5, d5 = 4, d6 = 3, d7 = 2, dTemp = 9;
 LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
+void updateLCD ();
 OneWire oneWire(dTemp);
 DallasTemperature probe(&oneWire);
-
-// Declarations for Wi-Fi
-const char* ssid     = "REPLACE_WITH_YOUR_SSID";
-const char* password = "REPLACE_WITH_YOUR_PASSWORD";
-WiFiServer server(80);
-String header;
 
 // Template declaration for temperature holder
 float targetTemp = 0, tTemp;
@@ -49,9 +43,6 @@ public:
 TempHolder <float> target(targetTemp);
 TempHolder <float> current(currentTemp);
 
-// Display function to update LCD scren with temp info
-void updateLCD ();
-
 
 // Analog pins for 3 way switch: 14 for up regulation
 // 15 for down regulation of targetTemp.
@@ -60,34 +51,17 @@ void updateLCD ();
 const int tUpPin = 14, tDownPin = 15, heaterPin = 10; 
 
 // Declarations for PID and heater
-int heaterStatus;
 int pulse = 0;
 
 void setup()
 {
-    Serial.begin(9600);
     pinMode(tUpPin, INPUT_PULLUP);
     pinMode(tDownPin, INPUT_PULLUP);
     pinMode(heaterPin, OUTPUT);
     lcd.begin(20, 4);
-    lcd.setCursor(0, 0), lcd.print("Connecting to:");
-    lcd.setCursor(0, 1), lcd.print(ssid);
-    WiFi.begin(ssid, password);
-    int wifiCounter = 0;
-    while (WiFi.status() != WL_CONNECTED)
-    {
-        delay(500);
-        lcd.setCursor(wifiCounter, 2), lcd.print(".");
-        wifiCounter++; 
-    }
-    lcd.clear();
-    lcd.setCursor(0, 0), lcd.print("WiFi connected.");
-    lcd.setCursor(0, 1), lcd.print("IP ");
-    lcd.setCursor(3, 1), lcd.print(WiFi.localIP());
-    server.begin();
     probe.begin();
-    lcd.setCursor(0, 2), lcd.print("Temp probe init OK");
-    lcd.setCursor(0, 3), lcd.print("System operational!");
+    lcd.setCursor(0, 1), lcd.print("Temp probe init OK");
+    lcd.setCursor(0, 2), lcd.print("System operational!");
     delay(1000);
 }
 
@@ -122,6 +96,4 @@ void updateLCD ()
     lcd.setCursor(14, 1), lcd.print(current.getTemp());
     lcd.setCursor(0, 2), lcd.print("Pulse ");
     lcd.setCursor(6, 2), lcd.print(pulse);
-    lcd.setCursor(0, 3), lcd.print("IP ");
-    lcd.setCursor(3, 3), lcd.print(WiFi.localIP());
 }
