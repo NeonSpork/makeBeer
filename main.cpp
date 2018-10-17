@@ -57,7 +57,7 @@ void updateLCD ();
 // 15 for down regulation of targetTemp.
 // INVERTED, connect to GND not 5V
 // heaterPin is output for heater relay
-const int tUpPin = 14, tDownPin = 15, heaterPin = 10; 
+const int tUpPin = 18, tDownPin = 19, heaterPin = 10; 
 
 // Declarations for PID and heater
 int heaterStatus;
