@@ -36,7 +36,7 @@ public:
         mTemp = x;
         return mTemp;
     };
-    T1& adjustTemp (const T1& x)
+    T1& adjustTemp (T1& x)
     {
         mTemp += x;
         if (mTemp<0)
@@ -168,8 +168,9 @@ void updateLCD ()
     }
 }
 
-int pulsePercent ()
+int pulsePercent (&outputVal)
 {
-    int pulsePercentRounded = ((outputVal/255)*100);
+    int mVal = &outputVal;
+    int pulsePercentRounded = ((mVal/255)*100);
     return pulsePercentRounded;
 }
