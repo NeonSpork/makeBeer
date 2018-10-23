@@ -14,9 +14,8 @@ and control system.
 * 20x4 LCD display
 * A box to put the microprocessor inside of
 * Optional:
-    * ESP8266 Wi-Fi module for your thing to make a web app to control
+    * ESP8266 Wi-Fi module for your thing to make a web app to control the module from your couch
     * Home made connectors so temperature probe and heater can easily be unplugged
-the module from your couch
 * Mandatory:
     * Day dreams about nerdy programming, building and brewing
 
