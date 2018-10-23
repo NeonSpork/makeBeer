@@ -2,6 +2,7 @@
 #include <DallasTemperature.h>
 #include <AutoPID.h>
 
+#define LCD_UPDATE_DELAY 300
 #define TEMP_READ_DELAY 800
 #define OUTPUT_MIN 0
 #define OUTPUT_MAX 255
@@ -10,6 +11,9 @@
 const int rs = 7, en = 6, d4 = 5, d5 = 4, d6 = 3, d7 = 2, dTemp = 9;
 LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 void updateLCD ();
+unsigned int lastLCDUpdate;
+int stringStart, stringStop = 0;
+int scrollCursor = 20;
 
 // Template declaration for temperature holder
 float targetTemp = 0, currentTemp;
@@ -32,7 +36,7 @@ public:
         mTemp = x;
         return mTemp;
     };
-    T1& adjustTemp (const T1& x)
+    T1& adjustTemp (T1& x)
     {
         mTemp += x;
         if (mTemp<0)
@@ -65,6 +69,7 @@ const int tUpPin = 18, tDownPin = 19, heaterPin = 10;
 
 // Declarations for PID and heater
 int pulse = 0;
+int pulsePercent();
 
 void setup()
 {
@@ -104,29 +109,68 @@ void loop()
     }
     myPID.run();
     analogWrite(10, outputVal);
-    updateLCD();
+    if ((millis() - lastLCDUpdate) > LCD_UPDATE_DELAY)
+    {
+        updateLCD();
+        lastLCDUpdate = millis();
+    }
 }
 
 void updateLCD ()
 {
+    // String conversion and processing numbers
     double tTemp = target.getTemp();
-    double cTemp = current.getTemp();
+    String targetTempString = String(tTemp, 2);
+    String fullTargetTempString = String("Target temp: " + targetTempString + " *C");
+    double  cTemp = current.getTemp();
+    String currentTempString = String(cTemp, 2);
+    String fullCurrentTempString = String("Current temp: " + currentTempString + " *C");
+    int pulse = pulsePercent(&outputVal);
+    String pulsePercentString = String(pulse);
+    String fullPulsePercentString = String("Pulse: " + pulsePercentString + "%");
+    String KpString = String(Kp);
+    String KiString = String(Ki);
+    String KdString = String(Kd);
+    String KPIDString = String("Kp: " + KpString + " Ki: " + KiString + " Kd: " + KdString);
+
+    // Writing to LCD screen, bottom rown scrolls
     lcd.clear();
-    lcd.setCursor(0, 0), lcd.print("Target temp: ");
-    lcd.setCursor(13, 0), lcd.print(tTemp);
-    lcd.setCursor(0, 1), lcd.print("Current temp: ");
-    lcd.setCursor(14, 1), lcd.print(cTemp);
-    lcd.setCursor(0, 2), lcd.print("Pulse %: ");
-    lcd.setCursor(9, 2), lcd.print(pulse);
+    lcd.setCursor(0, 0), lcd.print(fullTargetTempString);
+    lcd.setCursor(0, 1), lcd.print(fullCurrentTempString);
+    lcd.setCursor(0, 2), lcd.print(fullPulsePercentString);
+    if (KPIDString.length() > 20)
+    {
+        lcd.setCursor(scrollCursor, 3), lcd.print(KPIDString.substring(stringStart, stringStop));
+        if (stringStart == 0 && scrollCursor > 0)
+        {
+            scrollCursor--;
+            stringStop++;
+        }
+        else if (stringStart == stringStop)
+        {
+            stringStart = stringStop = 0;
+            scrollCursor = 20;
+        }
+        else if (stringStop == KPIDString.length() && scrollCursor == 0)
+        {
+            stringStart++;
+        }
+        else
+        {
+            stringStart++;
+            stringStop++;
+        }
+    }
+    else
+    {
+        lcd.setCursor(0, 3), lcd.print(KPIDString);
+        scrollCursor = 20;
+    }
 }
 
-int pulseWidth (float tempTarget, float tempCurrent)
+int pulsePercent (value)
 {
-    int pulsePercent = 0;
-    if (tempTarget > tempCurrent)
-    {
-        pulsePercent = 0;
-    }
-    pulse = (255 * (pulsePercent/100));
-    return pulse;
+    int mVal = value;
+    int pulsePercentRounded = ((mVal/255)*100);
+    return pulsePercentRounded;
 }
