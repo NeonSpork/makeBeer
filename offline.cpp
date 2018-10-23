@@ -125,7 +125,7 @@ void updateLCD ()
     double  cTemp = current.getTemp();
     String currentTempString = String(cTemp, 2);
     String fullCurrentTempString = String("Current temp: " + currentTempString + " *C");
-    int pulse = pulsePercent();
+    int pulse = pulsePercent(&outputVal);
     String pulsePercentString = String(pulse);
     String fullPulsePercentString = String("Pulse: " + pulsePercentString + "%");
     String KpString = String(Kp);
@@ -168,9 +168,9 @@ void updateLCD ()
     }
 }
 
-int pulsePercent (&outputVal)
+int pulsePercent (value)
 {
-    int mVal = &outputVal;
+    int mVal = value;
     int pulsePercentRounded = ((mVal/255)*100);
     return pulsePercentRounded;
 }
