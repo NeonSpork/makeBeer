@@ -19,12 +19,11 @@ WiFiServer server(80);
 String header;
 
 // Auxiliar variables to store the current output state
-String output5State = "off";
-String output4State = "off";
+String output10State = "0 %";
+String input9State = "No temp info";
 
 // Assign output variables to GPIO pins
-const int output5 = 5;
-const int output4 = 4;
+// TODO place input info here via Serial request
 
 void setup() {
   Serial.begin(115200);
