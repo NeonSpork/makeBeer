@@ -74,6 +74,8 @@ int pulsePercent();
 // Serial communication stuff
 char* dataIn, dataOut;
 Serial serialport;
+String ipAddress;
+String infoStreamString;
 // TODO - add more as we figure this out. Together. Just you and I, microchip.
 
 void setup()
@@ -136,16 +138,18 @@ void updateLCD ()
     String KpString = String(Kp);
     String KiString = String(Ki);
     String KdString = String(Kd);
+    String ipAdress = // SERIAL INPUT WITH IP ADRESS OF ESP8266 GOES HERE
     String KPIDString = String("Kp: " + KpString + " Ki: " + KiString + " Kd: " + KdString);
+    String infoStreamString = String(KPIDString + ipAdress);
 
     // Writing to LCD screen, bottom rown scrolls
     lcd.clear();
     lcd.setCursor(0, 0), lcd.print(fullTargetTempString);
     lcd.setCursor(0, 1), lcd.print(fullCurrentTempString);
     lcd.setCursor(0, 2), lcd.print(fullPulsePercentString);
-    if (KPIDString.length() > 20)
+    if (infoStreamString.length() > 20)
     {
-        lcd.setCursor(scrollCursor, 3), lcd.print(KPIDString.substring(stringStart, stringStop));
+        lcd.setCursor(scrollCursor, 3), lcd.print(infoStreamString.substring(stringStart, stringStop));
         if (stringStart == 0 && scrollCursor > 0)
         {
             scrollCursor--;
@@ -156,7 +160,7 @@ void updateLCD ()
             stringStart = stringStop = 0;
             scrollCursor = 20;
         }
-        else if (stringStop == KPIDString.length() && scrollCursor == 0)
+        else if (stringStop == infoStreamString.length() && scrollCursor == 0)
         {
             stringStart++;
         }
@@ -168,7 +172,7 @@ void updateLCD ()
     }
     else
     {
-        lcd.setCursor(0, 3), lcd.print(KPIDString);
+        lcd.setCursor(0, 3), lcd.print(InfoStreamString);
         scrollCursor = 20;
     }
 }
