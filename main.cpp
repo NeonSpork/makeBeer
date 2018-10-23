@@ -11,7 +11,7 @@
 const int rs = 7, en = 6, d4 = 5, d5 = 4, d6 = 3, d7 = 2, dTemp = 9;
 LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 void updateLCD ();
-unsigned int lastLCDUpdate;
+unsigned int lastLCDUpdate = 0;
 int stringStart, stringStop = 0;
 int scrollCursor = 20;
 
