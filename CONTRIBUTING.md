@@ -14,8 +14,7 @@ The entire project is mostly planned as a fun learning experience with micro
 processors, C++ and embedded systems in general. This is a light hearted project 
 with no real or serious end goal for the time being.
 
-It's somewhat linked to
- <getBeer href="https://github.com/NeonSpork/getBeer.git">getBeer</getBeer>, 
+It's somewhat linked to [getBeer](https://github.com/NeonSpork/getBeer.git "getBeer"), 
  another small project that uses a RaspberryPi, a touch screen and some smaller
  parts, and an old refrigerator to make a kegerator / kick-ass beer dispenser.
 
