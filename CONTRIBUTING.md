@@ -1,4 +1,9 @@
 # Guidelines
+## Rules
+There's not many rules. Above all be nice, and treat others with respect. There
+ are bound to be things others may not agree upon, seeing as I'm relatively new
+ to C++, arduino, etc. If there's something you disagree with or if you have
+ constructive feedback, I'm all ears! Just be civil about it :)
 ## General
 Primarily this is a personal project, at least it began as such.
 
