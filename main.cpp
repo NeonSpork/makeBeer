@@ -1,22 +1,22 @@
 #include <LiquidCrystal.h>
 #include <DallasTemperature.h>
-#include <ESP8266WiFi.h>
+#include <AutoPID.h>
+
+#define LCD_UPDATE_DELAY 300
+#define TEMP_READ_DELAY 800
+#define OUTPUT_MIN 0
+#define OUTPUT_MAX 255
 
 // Declarations for hardware
 const int rs = 7, en = 6, d4 = 5, d5 = 4, d6 = 3, d7 = 2, dTemp = 9;
 LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
-OneWire oneWire(dTemp);
-DallasTemperature probe(&oneWire);
-
-// Declarations for Wi-Fi
-const char* ssid     = "REPLACE_WITH_YOUR_SSID";
-const char* password = "REPLACE_WITH_YOUR_PASSWORD";
-WiFiServer server(80);
-String header;
+void updateLCD ();
+unsigned int lastLCDUpdate = 0;
+int stringStart, stringStop = 0;
+int scrollCursor = 20;
 
 // Template declaration for temperature holder
-float targetTemp = 0, tTemp;
-float currentTemp, cTemp;
+float targetTemp = 0, currentTemp;
 template <typename T1>
 class TempHolder
 {
@@ -34,8 +34,9 @@ public:
     T1& setTemp (T1& x)
     {
         mTemp = x;
+        return mTemp;
     };
-    T1& adjustTemp (const T1& x)
+    T1& adjustTemp (T1& x)
     {
         mTemp += x;
         if (mTemp<0)
@@ -49,9 +50,16 @@ public:
 TempHolder <float> target(targetTemp);
 TempHolder <float> current(currentTemp);
 
-// Display function to update LCD scren with temp info
-void updateLCD ();
+double currentTempPID = current.getTemp();
+double targetTempPID = target.getTemp();
 
+// Declaration for temp and PID
+OneWire oneWire(dTemp);
+DallasTemperature probe(&oneWire);
+unsigned int lastTempUpdate;
+double outputVal;
+double Kp = 0.12, Ki = 0.0003, Kd = 0;  // These will probably need adjusting
+AutoPID myPID(&currentTempPID, &targetTempPID, &outputVal, OUTPUT_MIN, OUTPUT_MAX, Kp, Ki, Kd);
 
 // Analog pins for 3 way switch: 14 for up regulation
 // 15 for down regulation of targetTemp.
@@ -60,41 +68,42 @@ void updateLCD ();
 const int tUpPin = 18, tDownPin = 19, heaterPin = 10; 
 
 // Declarations for PID and heater
-int heaterStatus;
 int pulse = 0;
+int pulsePercent();
+
+// Serial communication stuff
+char* dataIn, dataOut;
+Serial serialport;
+String ipAddress;
+String infoStreamString;
+// TODO - add more as we figure this out. Together. Just you and I, microchip.
 
 void setup()
 {
-    Serial.begin(9600);
     pinMode(tUpPin, INPUT_PULLUP);
     pinMode(tDownPin, INPUT_PULLUP);
     pinMode(heaterPin, OUTPUT);
     lcd.begin(20, 4);
-    lcd.setCursor(0, 0), lcd.print("Connecting to:");
-    lcd.setCursor(0, 1), lcd.print(ssid);
-    WiFi.begin(ssid, password);
-    int wifiCounter = 0;
-    while (WiFi.status() != WL_CONNECTED)
-    {
-        delay(500);
-        lcd.setCursor(wifiCounter, 2), lcd.print(".");
-        wifiCounter++; 
-    }
-    lcd.clear();
-    lcd.setCursor(0, 0), lcd.print("WiFi connected.");
-    lcd.setCursor(0, 1), lcd.print("IP ");
-    lcd.setCursor(3, 1), lcd.print(WiFi.localIP());
-    server.begin();
     probe.begin();
-    lcd.setCursor(0, 2), lcd.print("Temp probe init OK");
+    probe.requestTemperatures();
+    lcd.setCursor(0, 0), lcd.print("Temp probe init OK");
+    myPID.setBangBang(10);  // min/max at +-10 degrees from targetTemp
+    myPID.setTimeStep(1000);
+    lcd.setCursor(0, 1), lcd.print("PID: BangBang set at");
+    lcd.setCursor(0, 2), lcd.print("+/- 10*C from target");
     lcd.setCursor(0, 3), lcd.print("System operational!");
-    delay(1000);
+    delay(3000);
 }
 
 void loop()
 {
-    probe.requestTemperatures();
-    currentTemp = probe.getTempCByIndex(0);
+    if ((millis() - lastTempUpdate) > TEMP_READ_DELAY)
+    {
+        float tempRead = probe.getTempCByIndex(0);
+        current.setTemp(tempRead);
+        lastTempUpdate = millis();
+        probe.requestTemperatures();
+    }
     if (digitalRead(tUpPin))
     {
         target.adjustTemp(1);
@@ -105,23 +114,72 @@ void loop()
         target.adjustTemp(-1);
         delay(100);
     }
-
-    if (target.getTemp() < current.getTemp())
+    myPID.run();
+    analogWrite(10, outputVal);
+    if ((millis() - lastLCDUpdate) > LCD_UPDATE_DELAY)
     {
-        // DO PULSE THINGS
+        updateLCD();
+        lastLCDUpdate = millis();
     }
-    updateLCD();
 }
 
 void updateLCD ()
 {
+    // String conversion and processing numbers
+    double tTemp = target.getTemp();
+    String targetTempString = String(tTemp, 2);
+    String fullTargetTempString = String("Target temp: " + targetTempString + " *C");
+    double  cTemp = current.getTemp();
+    String currentTempString = String(cTemp, 2);
+    String fullCurrentTempString = String("Current temp: " + currentTempString + " *C");
+    int pulse = pulsePercent(&outputVal);
+    String pulsePercentString = String(pulse);
+    String fullPulsePercentString = String("Pulse: " + pulsePercentString + "%");
+    String KpString = String(Kp);
+    String KiString = String(Ki);
+    String KdString = String(Kd);
+    String ipAdress = // SERIAL INPUT WITH IP ADRESS OF ESP8266 GOES HERE
+    String KPIDString = String("Kp: " + KpString + " Ki: " + KiString + " Kd: " + KdString);
+    String infoStreamString = String(KPIDString + ipAdress);
+
+    // Writing to LCD screen, bottom rown scrolls
     lcd.clear();
-    lcd.setCursor(0, 0), lcd.print("Target temp: ");
-    lcd.setCursor(13, 0), lcd.print(target.getTemp());
-    lcd.setCursor(0, 1), lcd.print("Current temp: ");
-    lcd.setCursor(14, 1), lcd.print(current.getTemp());
-    lcd.setCursor(0, 2), lcd.print("Pulse ");
-    lcd.setCursor(6, 2), lcd.print(pulse);
-    lcd.setCursor(0, 3), lcd.print("IP ");
-    lcd.setCursor(3, 3), lcd.print(WiFi.localIP());
+    lcd.setCursor(0, 0), lcd.print(fullTargetTempString);
+    lcd.setCursor(0, 1), lcd.print(fullCurrentTempString);
+    lcd.setCursor(0, 2), lcd.print(fullPulsePercentString);
+    if (infoStreamString.length() > 20)
+    {
+        lcd.setCursor(scrollCursor, 3), lcd.print(infoStreamString.substring(stringStart, stringStop));
+        if (stringStart == 0 && scrollCursor > 0)
+        {
+            scrollCursor--;
+            stringStop++;
+        }
+        else if (stringStart == stringStop)
+        {
+            stringStart = stringStop = 0;
+            scrollCursor = 20;
+        }
+        else if (stringStop == infoStreamString.length() && scrollCursor == 0)
+        {
+            stringStart++;
+        }
+        else
+        {
+            stringStart++;
+            stringStop++;
+        }
+    }
+    else
+    {
+        lcd.setCursor(0, 3), lcd.print(InfoStreamString);
+        scrollCursor = 20;
+    }
+}
+
+int pulsePercent (value)
+{
+    int mVal = value;
+    int pulsePercentRounded = ((mVal/255)*100);
+    return pulsePercentRounded;
 }
