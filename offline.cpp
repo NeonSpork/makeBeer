@@ -15,43 +15,46 @@ unsigned int lastLCDUpdate;
 int stringStart, stringStop = 0;
 int scrollCursor = 20;
 
-// Template declaration for temperature holder
-float targetTemp = 0, currentTemp;
-template <typename T1>
+// Declaration of temp variables
+double currentTemp = 0, targetTemp = 0;
+
 class TempHolder
 {
-private:
-    T1 mTemp;
 public:
-    explicit TempHolder (T1& val1)
-    {
-        mTemp = val1;
-    };
-    T1& getTemp ()
-    {
-        return mTemp;
-    };
-    T1& setTemp (T1& x)
-    {
-        mTemp = x;
-        return mTemp;
-    };
-    T1& adjustTemp (T1& x)
-    {
-        mTemp += x;
-        if (mTemp<0)
-        {
-            mTemp = 0;
-        }
-        return mTemp;
-    };
+    TempHolder(double *temp);
+    ~TempHolder();
+    double getTemp();
+    void setTemp(double newTemp);
+    void adjustTemp(double incrementTemp);
+private:
+    double *mTemp;
 };
-// Specialization of temperature templates
-TempHolder <float> target(targetTemp);
-TempHolder <float> current(currentTemp);
+TempHolder::TempHolder(double *temp)
+{
+    mTemp = temp;
+}
+TempHolder::~TempHolder(){}
 
-double currentTempPID = current.getTemp();
-double targetTempPID = target.getTemp();
+double TempHolder::getTemp()
+{
+    return *mTemp;
+}
+void TempHolder::setTemp(double newTemp)
+{
+    *mTemp = newTemp;
+}
+void TempHolder::adjustTemp(double incrementTemp)
+{
+    *mTemp += incrementTemp;
+    if (*mTemp<0)
+    {
+        *mTemp = 0;
+    }
+}
+
+// Specialization of temperature templates
+TempHolder target(&targetTemp);
+TempHolder current(&currentTemp);
 
 // Declaration for temp and PID
 OneWire oneWire(dTemp);
@@ -59,7 +62,7 @@ DallasTemperature probe(&oneWire);
 unsigned int lastTempUpdate;
 double outputVal;
 double Kp = 0.12, Ki = 0.0003, Kd = 0;  // These will probably need adjusting
-AutoPID myPID(&currentTempPID, &targetTempPID, &outputVal, OUTPUT_MIN, OUTPUT_MAX, Kp, Ki, Kd);
+AutoPID myPID(&currentTemp, &targetTemp, &outputVal, OUTPUT_MIN, OUTPUT_MAX, Kp, Ki, Kd);
 
 // Analog pins for 3 way switch: 14 for up regulation
 // 15 for down regulation of targetTemp.
@@ -69,7 +72,13 @@ const int tUpPin = 18, tDownPin = 19, heaterPin = 10;
 
 // Declarations for PID and heater
 int pulse = 0;
-int pulsePercent();
+int pulsePercent(double *value)
+{
+    double mValDouble = *value;
+    int mVal = int(mValDouble);
+    int pulsePercent = ((mVal/255)*100);
+    return pulsePercent;
+}
 
 void setup()
 {
@@ -92,7 +101,8 @@ void loop()
 {
     if ((millis() - lastTempUpdate) > TEMP_READ_DELAY)
     {
-        float tempRead = probe.getTempCByIndex(0);
+        float tempReadFloat = probe.getTempCByIndex(0);
+        double tempRead = double(tempReadFloat);
         current.setTemp(tempRead);
         lastTempUpdate = millis();
         probe.requestTemperatures();
@@ -168,9 +178,3 @@ void updateLCD ()
     }
 }
 
-int pulsePercent (value)
-{
-    int mVal = value;
-    int pulsePercentRounded = ((mVal/255)*100);
-    return pulsePercentRounded;
-}
