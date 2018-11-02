@@ -7,14 +7,20 @@
 
 #define LCD_UPDATE_DELAY 500
 #define TEMP_READ_DELAY 800
-#define TEMP_INPUT_DELAY 50
+#define TEMP_INPUT_DELAY 250
 #define OUTPUT_MIN 0
 #define OUTPUT_MAX 255
 
-// Declarations for hardware
+// Use LiquidCrystal if you're using the original LiquidCrystal
+// library and have soldered wires directly from your LCD
 // const int rs = 7, en = 6, d4 = 5, d5 = 4, d6 = 3, d7 = 2;
 // LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
+
+// Use LiquidCrystal_I2C if you're using a serial converter chip
+// that only uses 4 wires
 LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
+
+// Declarations for LCD 
 void updateLCD();
 unsigned long lastLCDUpdate;
 int stringStart, stringStop = 0;
@@ -32,6 +38,7 @@ double currentTemp, targetTemp;
 TempHolder target(0);
 TempHolder current(0);
 bool udpateTemp();
+void manuallyAdjustTemp();
 
 // Declaration for temp and PID
 const int dTemp = 4;
@@ -41,7 +48,7 @@ DeviceAddress insideThermometer = {0x28, 0xFF, 0xC5, 0xDC, 0x80, 0x14, 0x02, 0xA
 
 unsigned long lastTempUpdate;
 double outputVal;
-double Kp = 5, Ki = 0.0002, Kd = 0;  // These will need adjusting
+double Kp = 10, Ki = 0, Kd = 0;  // These will need adjusting
 AutoPID myPID(&currentTemp, &targetTemp, &outputVal, OUTPUT_MIN, OUTPUT_MAX, Kp, Ki, Kd);
 
 // Declarations for PID and heater
@@ -65,6 +72,23 @@ bool udpateTemp()
     return true;
   }
   return false;
+}
+
+void manuallyAdjustTemp()
+{
+  if ((millis() - lastTempInput) > TEMP_INPUT_DELAY)
+  {   
+    if (digitalRead(tUpPin))
+    {
+      target.adjustTemp(1);
+      lastTempInput = millis();
+    }
+    if (digitalRead(tDownPin))
+    {
+      target.adjustTemp(-1);
+      lastTempInput = millis();
+    }
+  }
 }
 
 void updateLCD ()
@@ -146,22 +170,7 @@ void setup()
 
 void loop()
 {
-  if (digitalRead(tUpPin))
-  // {
-    // if ((millis() - lastTempInput) > TEMP_INPUT_DELAY)
-    // {
-      target.adjustTemp(1);
-      // lastTempInput = millis();
-    // }
-  // }
-  if (digitalRead(tDownPin))
-  // {
-  //   if ((millis() - lastTempInput) > TEMP_INPUT_DELAY)
-  //   {
-      target.adjustTemp(-1);
-    //   lastTempInput = millis();
-    // }
-  // }
+  manuallyAdjustTemp();
   udpateTemp();
   myPID.run();
   analogWrite(10, outputVal);
