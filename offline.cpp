@@ -17,7 +17,6 @@
 // LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 
 // Use LiquidCrystal_I2C if you're using a serial converter chip
-// that only uses 4 wires
 LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
 
 // Declarations for LCD 
@@ -35,25 +34,27 @@ unsigned long lastTempInput;
 
 // Declaration of temp variables
 double currentTemp, targetTemp;
-TempHolder target(0);
-TempHolder current(0);
+TempHolder target(0);  // Temp holder object for the target temperature
 bool udpateTemp();
 void manuallyAdjustTemp();
 
-// Declaration for temp and PID
+// Declaration for temperature probe
 const int dTemp = 4;
 OneWire oneWire(dTemp);
 DallasTemperature currentTempProbe(&oneWire);
+// DeviceAddress is specific to each unique DS18B20 probe
+// Find yours with the exapmles here:
+// https://github.com/milesburton/Arduino-Temperature-Control-Library/tree/master/examples
 DeviceAddress insideThermometer = {0x28, 0xFF, 0xC5, 0xDC, 0x80, 0x14, 0x02, 0xA2};
 
+// Declaration for PID controller
 unsigned long lastTempUpdate;
 double outputVal;
+double pulsePercent();
 double Kp = 10, Ki = 0, Kd = 0;  // These will need adjusting
 AutoPID myPID(&currentTemp, &targetTemp, &outputVal, OUTPUT_MIN, OUTPUT_MAX, Kp, Ki, Kd);
 
-// Declarations for PID and heater
-double pulsePercent();
-
+// Function definitions
 double pulsePercent()
 {
   double pulsePercent = ((outputVal/255)*100);
@@ -81,13 +82,12 @@ void manuallyAdjustTemp()
     if (digitalRead(tUpPin))
     {
       target.adjustTemp(1);
-      lastTempInput = millis();
     }
     if (digitalRead(tDownPin))
     {
       target.adjustTemp(-1);
-      lastTempInput = millis();
     }
+    lastTempInput = millis();
   }
 }
 
@@ -111,7 +111,7 @@ void updateLCD ()
       String KdString = String(Kd);
       String KPIDString = String("Kp: " + KpString + " Ki: " + KiString + " Kd: " + KdString);
       
-      // Writing to LCD screen, bottom rown scrolls
+      // Writing to LCD screen, bottom row scrolls if the line length is over 20
       lcd.clear();
       lcd.setCursor(0, 0), lcd.print(fullTargetTempString);
       lcd.setCursor(0, 1), lcd.print(fullCurrentTempString);
@@ -142,7 +142,6 @@ void updateLCD ()
       else
       {
         lcd.setCursor(0, 3), lcd.print(KPIDString);
-        scrollCursor = 20;
       }
     lastLCDUpdate = millis();
   }
