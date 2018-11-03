@@ -35,3 +35,5 @@
 # Others (schematics etc.)
 *.pub
 *.pdf
+*.sublime-project
+*.sublime-workspace

@@ -156,7 +156,7 @@ void setup()
   currentTempProbe.begin();
   currentTempProbe.requestTemperatures();
   while (!udpateTemp()) {}
-  current.setTemp(currentTempProbe.getTempCByIndex(0));
+  currentTemp = currentTempProbe.getTempC(insideThermometer);
   targetTemp = target.getTemp();
   lcd.setCursor(0, 0), lcd.print("Temp probe init OK");
   myPID.setBangBang(10);  // min/max at +-10 degrees from targetTemp
