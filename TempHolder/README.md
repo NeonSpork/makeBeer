@@ -5,4 +5,7 @@ are kept.
 
 That way you can add it into your libraries from the arduino sketch IDE
 and use it directly with the header:
-`#include <TempHolder.hpp>
+
+`#include <TempHolder.hpp>`
+
+Alternatively link the sources or link as a library if using makefiles.

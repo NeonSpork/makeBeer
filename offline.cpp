@@ -54,14 +54,15 @@ double pulsePercent();
 double Kp = 10, Ki = 0, Kd = 0;  // These will need adjusting
 AutoPID myPID(&currentTemp, &targetTemp, &outputVal, OUTPUT_MIN, OUTPUT_MAX, Kp, Ki, Kd);
 
-// Function definitions
 double pulsePercent()
+// Converts the analog bit value of the pulsewidth to a percentage for display
 {
   double pulsePercent = ((outputVal/255)*100);
   return pulsePercent;
 }
 
 bool udpateTemp()
+// Reads temperature from DS18B20 at set intervals
 {
   if ((millis() - lastTempUpdate) > TEMP_READ_DELAY)
   {
@@ -76,6 +77,8 @@ bool udpateTemp()
 }
 
 void manuallyAdjustTemp()
+// Checks for input from 3 way switch that manually adjusts
+// target temperature and updates TempHolder target
 {
   if ((millis() - lastTempInput) > TEMP_INPUT_DELAY)
   {   
@@ -111,7 +114,7 @@ void updateLCD ()
       String KdString = String(Kd);
       String KPIDString = String("Kp: " + KpString + " Ki: " + KiString + " Kd: " + KdString);
       
-      // Writing to LCD screen, bottom row scrolls if the line length is over 20
+      // Writing to LCD screen, bottom row scrolls if the line length is wider than screen
       lcd.clear();
       lcd.setCursor(0, 0), lcd.print(fullTargetTempString);
       lcd.setCursor(0, 1), lcd.print(fullCurrentTempString);
@@ -149,6 +152,7 @@ void updateLCD ()
 
 void setup()
 {
+  // Runs once at startup
   pinMode(tUpPin, INPUT_PULLUP);
   pinMode(tDownPin, INPUT_PULLUP);
   pinMode(heaterPin, OUTPUT);
@@ -169,6 +173,7 @@ void setup()
 
 void loop()
 {
+  // Runs continuously
   manuallyAdjustTemp();
   udpateTemp();
   myPID.run();
