@@ -62,7 +62,7 @@ double pulsePercent()
 }
 
 bool udpateTemp()
-// Reads temperature from DS18B20 every 800 milliseconds
+// Reads temperature from DS18B20 at set intervals
 {
   if ((millis() - lastTempUpdate) > TEMP_READ_DELAY)
   {
@@ -114,7 +114,7 @@ void updateLCD ()
       String KdString = String(Kd);
       String KPIDString = String("Kp: " + KpString + " Ki: " + KiString + " Kd: " + KdString);
       
-      // Writing to LCD screen, bottom row scrolls if the line length is over 20
+      // Writing to LCD screen, bottom row scrolls if the line length is wider than screen
       lcd.clear();
       lcd.setCursor(0, 0), lcd.print(fullTargetTempString);
       lcd.setCursor(0, 1), lcd.print(fullCurrentTempString);
