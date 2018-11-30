@@ -22,7 +22,8 @@ LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
 // Declarations for LCD 
 void updateLCD();
 unsigned long lastLCDUpdate = 0;
-int stringStart, stringStop = 0;
+int stringStart = 0;
+int stringStop = 0;
 int scrollCursor = 20;
 
 // Analog pins for 3 way switch: 14 for up regulation
