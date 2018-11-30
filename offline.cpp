@@ -21,7 +21,7 @@ LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
 
 // Declarations for LCD 
 void updateLCD();
-unsigned long lastLCDUpdate;
+unsigned long lastLCDUpdate = 0;
 int stringStart, stringStop = 0;
 int scrollCursor = 20;
 
@@ -30,10 +30,11 @@ int scrollCursor = 20;
 // INVERTED, connect to GND not 5V
 // heaterPin is output for heater relay
 const int tUpPin = 18, tDownPin = 19, heaterPin = 10; 
-unsigned long lastTempInput;
+unsigned long lastTempInput = 0;
 
 // Declaration of temp variables
-double currentTemp, targetTemp;
+double currentTemp = 0;
+double targetTemp = 0;
 TempHolder target(0);  // Temp holder object for the target temperature
 bool udpateTemp();
 void manuallyAdjustTemp();
@@ -49,7 +50,7 @@ DeviceAddress insideThermometer = {0x28, 0xFF, 0xC5, 0xDC, 0x80, 0x14, 0x02, 0xA
 
 // Declaration for PID controller
 unsigned long lastTempUpdate;
-double outputVal;
+double outputVal = 0;
 double pulsePercent();
 double Kp = 10, Ki = 0, Kd = 0;  // These will need adjusting
 AutoPID myPID(&currentTemp, &targetTemp, &outputVal, OUTPUT_MIN, OUTPUT_MAX, Kp, Ki, Kd);
