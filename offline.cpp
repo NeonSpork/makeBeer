@@ -50,7 +50,7 @@ DallasTemperature currentTempProbe(&oneWire);
 DeviceAddress insideThermometer = {0x28, 0xFF, 0xC5, 0xDC, 0x80, 0x14, 0x02, 0xA2};
 
 // Declaration for PID controller
-unsigned long lastTempUpdate;
+unsigned long lastTempUpdate = 0;
 double outputVal = 0;
 double pulsePercent();
 double Kp = 10, Ki = 0, Kd = 0;  // These will need adjusting
